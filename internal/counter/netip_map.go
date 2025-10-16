@@ -9,11 +9,11 @@ import (
 
 type NetIPMap struct{}
 
-func (c *NetIPMap) Name() string {
+func (c NetIPMap) Name() string {
 	return "netip_map"
 }
 
-func (c *NetIPMap) Count(r io.Reader) (int, error) {
+func (c NetIPMap) Count(r io.Reader) (int, error) {
 	seen := make(map[netip.Addr]struct{})
 	scanner := bufio.NewScanner(r)
 

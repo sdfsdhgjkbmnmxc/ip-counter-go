@@ -12,14 +12,14 @@ type NaiveCounter struct {
 	Capacity          int
 }
 
-func (c *NaiveCounter) Name() string {
+func (c NaiveCounter) Name() string {
 	if c.InitialBufferSize == 0 && c.MaxBufferSize == 0 {
 		return "naive"
 	}
 	return fmt.Sprintf("naive (init buf: %d, max buf: %d, capacity: %d)", c.InitialBufferSize, c.MaxBufferSize, c.Capacity)
 }
 
-func (c *NaiveCounter) Count(r io.Reader) (int, error) {
+func (c NaiveCounter) Count(r io.Reader) (int, error) {
 	seen := make(map[string]struct{}, c.Capacity)
 	scanner := bufio.NewScanner(r)
 

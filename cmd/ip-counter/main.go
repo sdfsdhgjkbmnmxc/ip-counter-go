@@ -13,27 +13,34 @@ func main() {
 	flag.Parse()
 
 	if flag.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: %s [-method=<method>] <filename>\n", os.Args[0])
+		_, _ = fmt.Fprintf(os.Stderr, "Usage: %s [-method=<method>] <filename>\n", os.Args[0])
 		os.Exit(1)
 	}
 
-	c, ok := counter.Counters[*method]
-	if !ok {
-		fmt.Fprintf(os.Stderr, "Unknown method: %s\n", *method)
+	var methodImpl counter.IPAddrCounter
+	for _, c := range counter.Counters {
+		if c.Name() == *method {
+			methodImpl = c
+			break
+		}
+	}
+
+	if methodImpl == nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Unknown method: %s\n", *method)
 		os.Exit(1)
 	}
 
 	filename := flag.Arg(0)
 	file, err := os.Open(filename)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error opening file: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Error opening file: %v\n", err)
 		os.Exit(1)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
-	count, err := c.Count(file)
+	count, err := methodImpl.Count(file)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error counting IPs: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Error counting IPs: %v\n", err)
 		os.Exit(1)
 	}
 

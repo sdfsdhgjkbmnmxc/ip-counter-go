@@ -1,8 +1,11 @@
 package counter
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 )
 
@@ -11,26 +14,46 @@ func BenchmarkCounter(b *testing.B) {
 	if err != nil {
 		b.Fatalf("Failed to find test files: %v", err)
 	}
-	if len(testFiles) == 0 {
-		b.Skip("No test files found in testdata/")
+
+	var sizes = make(map[string]int64, len(testFiles))
+	for _, path := range testFiles {
+		fi, err := os.Stat(path)
+		if err != nil {
+			b.Fatalf("Failed to stat file %s: %v", path, err)
+		}
+		sizes[path] = fi.Size()
 	}
 
+	sort.Slice(testFiles, func(i, j int) bool {
+		return sizes[testFiles[i]] < sizes[testFiles[j]]
+	})
+
 	for _, path := range testFiles {
-		filename := filepath.Base(path)
-		b.Run(filename, func(b *testing.B) {
-			for method, counter := range Counters {
-				b.Run(method, func(b *testing.B) {
+		b.Run(filepath.Base(path), func(b *testing.B) {
+			for _, counter := range Counters {
+				b.Run(counter.Name(), func(b *testing.B) {
 					b.ReportAllocs()
 					for i := 0; i < b.N; i++ {
-						f, err := os.Open(path)
-						if err != nil {
-							b.Fatalf("Failed to open %s: %v", path, err)
-						}
+						err := func() error {
+							f, err := os.Open(path)
+							if err != nil {
+								return fmt.Errorf("failed to open file %s: %w", path, err)
+							}
+							defer func() { _ = f.Close() }()
 
-						_, err = counter.Count(f)
-						f.Close()
+							res, err := counter.Count(f)
+							if err != nil {
+								return fmt.Errorf("counter.Count() failed: %w", err)
+							}
+
+							if res == 0 {
+								return errors.New("counter.Count() returned 0")
+							}
+
+							return nil
+						}()
 						if err != nil {
-							b.Fatalf("Count failed: %v", err)
+							b.Fatalf("Error during counting: %v", err)
 						}
 					}
 				})

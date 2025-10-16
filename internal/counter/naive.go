@@ -9,17 +9,18 @@ import (
 type NaiveCounter struct {
 	InitialBufferSize int
 	MaxBufferSize     int
+	Capacity          int
 }
 
 func (c *NaiveCounter) Name() string {
 	if c.InitialBufferSize == 0 && c.MaxBufferSize == 0 {
 		return "naive"
 	}
-	return fmt.Sprintf("naive (init buf: %d, max buf: %d)", c.InitialBufferSize, c.MaxBufferSize)
+	return fmt.Sprintf("naive (init buf: %d, max buf: %d, capacity: %d)", c.InitialBufferSize, c.MaxBufferSize, c.Capacity)
 }
 
-func (c *NaiveCounter) Count(r io.Reader) (int64, error) {
-	seen := make(map[string]struct{})
+func (c *NaiveCounter) Count(r io.Reader) (int, error) {
+	seen := make(map[string]struct{}, c.Capacity)
 	scanner := bufio.NewScanner(r)
 
 	if c.InitialBufferSize > 0 || c.MaxBufferSize > 0 {
@@ -36,5 +37,5 @@ func (c *NaiveCounter) Count(r io.Reader) (int64, error) {
 		return 0, err
 	}
 
-	return int64(len(seen)), nil
+	return len(seen), nil
 }

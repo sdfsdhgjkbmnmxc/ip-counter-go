@@ -16,8 +16,12 @@ type chunk struct {
 	start, end int
 }
 
+func (c chunk) size() int {
+	return c.end - c.start
+}
+
 func (c Uint32MmapParallel) Name() string {
-	return fmt.Sprintf("uint32_mmap_parallel_%d", c.Workers)
+	return fmt.Sprintf("uint32_mmap_parallel(workers=%d)", c.Workers)
 }
 
 func (c Uint32MmapParallel) Count(r io.Reader) (int, error) {
@@ -93,7 +97,7 @@ func (c Uint32MmapParallel) processChunksParallel(data []byte, chunks []chunk) [
 }
 
 func (c Uint32MmapParallel) processChunk(data []byte, ch chunk) map[uint32]struct{} {
-	seen := make(map[uint32]struct{})
+	seen := make(map[uint32]struct{}, maxCapacity(ch.size()/avgIPv4size))
 	lineStart := ch.start
 
 	for i := ch.start; i < ch.end; i++ {
@@ -117,18 +121,12 @@ func (c Uint32MmapParallel) processChunk(data []byte, ch chunk) map[uint32]struc
 }
 
 func (c Uint32MmapParallel) mergeResults(results []map[uint32]struct{}) map[uint32]struct{} {
-	const maxSize = 1 << 32
-
 	totalSize := 0
 	for _, result := range results {
 		totalSize += len(result)
 	}
 
-	if totalSize > maxSize {
-		totalSize = maxSize
-	}
-
-	total := make(map[uint32]struct{})
+	total := make(map[uint32]struct{}, maxCapacity(totalSize))
 	for _, result := range results {
 		for ip := range result {
 			total[ip] = struct{}{}

@@ -16,7 +16,7 @@ func (c NaiveCounter) Name() string {
 	if c.InitialBufferSize == 0 && c.MaxBufferSize == 0 {
 		return "naive"
 	}
-	return fmt.Sprintf("naive (init buf: %d, max buf: %d, capacity: %d)", c.InitialBufferSize, c.MaxBufferSize, c.Capacity)
+	return fmt.Sprintf("naive (init_buf=%d, max_buf=%d, cap=%d)", c.InitialBufferSize, c.MaxBufferSize, c.Capacity)
 }
 
 func (c NaiveCounter) Count(r io.Reader) (int, error) {

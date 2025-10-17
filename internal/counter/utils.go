@@ -2,6 +2,18 @@ package counter
 
 import "fmt"
 
+const (
+	avgIPv4size   = 15
+	maxIPv4number = 1 << 32
+)
+
+func maxCapacity(v int) int {
+	if v > maxIPv4number {
+		return maxIPv4number
+	}
+	return v
+}
+
 func parseIPv4(s string) (uint32, error) {
 	return parseIPv4FromBytes([]byte(s))
 }

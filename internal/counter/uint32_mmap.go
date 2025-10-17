@@ -35,7 +35,7 @@ func (c Uint32Mmap) Count(r io.Reader) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
-	seen := make(map[uint32]struct{})
+	seen := make(map[uint32]struct{}, maxCapacity(size/avgIPv4size))
 	start := 0
 
 	for i := 0; i < len(data); i++ {

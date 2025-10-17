@@ -12,8 +12,6 @@ type IPAddrCounter interface {
 }
 
 var Registry = countersRegistry{
-	BashCounter{},
-	NaiveCounter{},
 	NewMMapCounter("MapSet", func(fileSize int) u32.Set {
 		return u32.NewMapSet(maxCapacity(fileSize / avgIPv4size))
 	}),
@@ -26,6 +24,8 @@ var Registry = countersRegistry{
 		}
 		return u32.NewMapSet(maxCapacity(fileSize / avgIPv4size))
 	}),
+	NaiveCounter{},
+	BashCounter{},
 }
 
 type countersRegistry []IPAddrCounter

@@ -32,3 +32,12 @@ Use `-method` flag to select implementation:
 - **MapSet**: Hash map, memory-efficient for smaller datasets
 - **BitmapSet**: Bitmap, fast on large datasets with fixed 512 MB memory
 - **NaiveCounter**: String-based map without IP parsing (research/comparison)
+
+## Optimizations
+
+For maximum performance:
+
+- **Memory-mapped I/O**: Reads files via `mmap` instead of standard I/O (stdin not supported)
+- **Custom IPv4 parser**: Specialized parser converts addresses to `uint32`, significantly faster than standard library
+- **Simple input format**: Expects valid IPv4 addresses, one per line (`\n` separated)
+

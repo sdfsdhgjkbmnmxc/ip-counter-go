@@ -39,36 +39,47 @@ func (s *ipv4map) Count() int {
 	return len(s.m)
 }
 
-type ipv4bitset struct {
-	bits  uint32
-	count int
-}
-
-func (s ipv4bitset) Add(ip uint32) {
-	mask := uint32(1) << (ip % 32)
-	if s.bits&mask == 0 {
-		s.bits |= mask
-		s.count++
+func newIPv4BitSet() uint32set {
+	return &ipv4bitmap{
+		bitmap: make([]byte, 1<<29),
 	}
 }
 
-func (s ipv4bitset) Union(other uint32set) uint32set {
+type ipv4bitmap struct {
+	count  int
+	bitmap []byte
+}
+
+func (s *ipv4bitmap) Add(ip uint32) {
+	byteIndex := ip >> 3
+	bitIndex := ip & 7
+	mask := byte(1 << bitIndex)
+
+	if s.bitmap[byteIndex]&mask == 0 {
+		s.count++
+		s.bitmap[byteIndex] |= mask
+	}
+}
+
+func (s *ipv4bitmap) Union(other uint32set) uint32set {
 	switch other.(type) {
-	case ipv4bitset:
-		otherSet := other.(ipv4bitset)
-		newBits := s.bits | otherSet.bits
-		newCount := 0
-		for i := 0; i < 32; i++ {
-			if newBits&(1<<i) != 0 {
-				newCount++
+	case *ipv4bitmap:
+		otherSet := other.(*ipv4bitmap)
+		for i := 0; i < len(s.bitmap); i++ {
+			combined := s.bitmap[i] | otherSet.bitmap[i]
+			for b := byte(1); b != 0; b <<= 1 {
+				if combined&b != 0 && s.bitmap[i]&b == 0 {
+					s.count++
+				}
 			}
+			s.bitmap[i] = combined
 		}
-		return ipv4bitset{bits: newBits, count: newCount}
 	default:
 		panic("unreachable")
 	}
+	return s
 }
 
-func (s ipv4bitset) Count() int {
+func (s *ipv4bitmap) Count() int {
 	return s.count
 }

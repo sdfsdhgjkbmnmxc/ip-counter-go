@@ -1,6 +1,7 @@
 package counter
 
 import (
+	"fmt"
 	"os"
 	"syscall"
 )
@@ -28,48 +29,29 @@ func (c BitmapMmap) Count(f *os.File) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
-	return c.processData(data), nil
-}
-
-func (c BitmapMmap) processData(data []byte) int {
-	bitmap := make([]byte, 1<<29)
-	count := 0
+	seen := newIPv4BitSet()
 	start := 0
 
 	for i := 0; i < len(data); i++ {
 		if data[i] == '\n' {
 			if i > start {
-				if c.setBit(bitmap, data[start:i]) {
-					count++
+				ip, err := parseIPv4FromBytes(data[start:i])
+				if err != nil {
+					return 0, fmt.Errorf("invalid IP address: %v", err)
 				}
+				seen.Add(ip)
 			}
 			start = i + 1
 		}
 	}
 
 	if start < len(data) {
-		if c.setBit(bitmap, data[start:]) {
-			count++
+		ip, err := parseIPv4FromBytes(data[start:])
+		if err != nil {
+			return 0, fmt.Errorf("invalid IP address: %v", err)
 		}
+		seen.Add(ip)
 	}
 
-	return count
-}
-
-func (c BitmapMmap) setBit(bitmap []byte, line []byte) bool {
-	ip, err := parseIPv4FromBytes(line)
-	if err != nil {
-		return false
-	}
-
-	byteIndex := ip >> 3
-	bitIndex := ip & 7
-	mask := byte(1 << bitIndex)
-
-	if bitmap[byteIndex]&mask == 0 {
-		bitmap[byteIndex] |= mask
-		return true
-	}
-
-	return false
+	return seen.Count(), nil
 }

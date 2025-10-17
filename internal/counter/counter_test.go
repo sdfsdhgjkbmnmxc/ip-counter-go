@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-const testDataPath = "../../testdata/*.txt"
+const testDataPath = "../../testdata/*"
 
 func TestResultsEqual(t *testing.T) {
 	testFiles, err := filepath.Glob(testDataPath)

@@ -17,5 +17,4 @@ testdata-large:
 	@echo "Extracting..."
 	@unzip -q ip_addresses.zip -d testdata/
 	@rm ip_addresses.zip
-	@mv testdata/ip_addresses testdata/ip_addresses.txt
 	@ls -lh testdata/

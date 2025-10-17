@@ -2,7 +2,6 @@ package counter
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"sync"
 	"syscall"
@@ -28,17 +27,12 @@ func (c Uint32MmapParallel) minChunkSize() int {
 	return avgIPv4size * 10
 }
 
-func (c Uint32MmapParallel) Count(r io.Reader) (int, error) {
+func (c Uint32MmapParallel) Count(f *os.File) (int, error) {
 	if c.Workers < 1 {
 		return 0, fmt.Errorf("workers must be >= 1")
 	}
 
-	file, ok := r.(*os.File)
-	if !ok {
-		return 0, fmt.Errorf("mmap requires *os.File")
-	}
-
-	stat, err := file.Stat()
+	stat, err := f.Stat()
 	if err != nil {
 		return 0, err
 	}
@@ -48,7 +42,7 @@ func (c Uint32MmapParallel) Count(r io.Reader) (int, error) {
 		return 0, nil
 	}
 
-	data, err := syscall.Mmap(int(file.Fd()), 0, size, syscall.PROT_READ, syscall.MAP_SHARED)
+	data, err := syscall.Mmap(int(f.Fd()), 0, size, syscall.PROT_READ, syscall.MAP_SHARED)
 	if err != nil {
 		return 0, err
 	}

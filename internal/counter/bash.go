@@ -2,7 +2,6 @@ package counter
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strconv"
@@ -15,13 +14,8 @@ func (c BashSort) Name() string {
 	return "bash_sort"
 }
 
-func (c BashSort) Count(r io.Reader) (int, error) {
-	file, ok := r.(*os.File)
-	if !ok {
-		return 0, fmt.Errorf("bash sort requires *os.File")
-	}
-
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("sort -u %s | wc -l", file.Name()))
+func (c BashSort) Count(f *os.File) (int, error) {
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("sort -u %s | wc -l", f.Name()))
 	output, err := cmd.Output()
 	if err != nil {
 		return 0, err

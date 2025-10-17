@@ -3,7 +3,7 @@ package counter
 import (
 	"bufio"
 	"fmt"
-	"io"
+	"os"
 )
 
 type NaiveCounter struct {
@@ -19,9 +19,9 @@ func (c NaiveCounter) Name() string {
 	return fmt.Sprintf("naive (init_buf=%d, max_buf=%d, cap=%d)", c.InitialBufferSize, c.MaxBufferSize, c.Capacity)
 }
 
-func (c NaiveCounter) Count(r io.Reader) (int, error) {
+func (c NaiveCounter) Count(f *os.File) (int, error) {
 	seen := make(map[string]struct{}, c.Capacity)
-	scanner := bufio.NewScanner(r)
+	scanner := bufio.NewScanner(f)
 
 	if c.InitialBufferSize > 0 || c.MaxBufferSize > 0 {
 		buf := make([]byte, 0, c.InitialBufferSize)

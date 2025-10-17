@@ -1,10 +1,10 @@
 package counter
 
-import "io"
+import "os"
 
 type IPAddrCounter interface {
 	Name() string
-	Count(io.Reader) (int, error)
+	Count(*os.File) (int, error)
 }
 
 var Counters = []IPAddrCounter{
@@ -18,5 +18,6 @@ var Counters = []IPAddrCounter{
 	&Uint32MmapParallel{Workers: 8},
 	&Uint32MmapParallel{Workers: 16},
 	&BitmapCounter{},
+	&BitmapMmap{},
 	&BashSort{},
 }

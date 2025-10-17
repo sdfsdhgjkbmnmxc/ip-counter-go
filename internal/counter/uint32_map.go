@@ -3,7 +3,7 @@ package counter
 import (
 	"bufio"
 	"fmt"
-	"io"
+	"os"
 )
 
 type Uint32Map struct{}
@@ -12,9 +12,9 @@ func (c Uint32Map) Name() string {
 	return "uint32_map"
 }
 
-func (c Uint32Map) Count(r io.Reader) (int, error) {
+func (c Uint32Map) Count(f *os.File) (int, error) {
 	seen := make(map[uint32]struct{})
-	scanner := bufio.NewScanner(r)
+	scanner := bufio.NewScanner(f)
 
 	for scanner.Scan() {
 		ip, err := parseIPv4(scanner.Text())

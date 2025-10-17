@@ -2,7 +2,6 @@ package counter
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"syscall"
 )
@@ -13,13 +12,8 @@ func (c Uint32Mmap) Name() string {
 	return "uint32_mmap"
 }
 
-func (c Uint32Mmap) Count(r io.Reader) (int, error) {
-	file, ok := r.(*os.File)
-	if !ok {
-		return 0, fmt.Errorf("mmap requires *os.File")
-	}
-
-	stat, err := file.Stat()
+func (c Uint32Mmap) Count(f *os.File) (int, error) {
+	stat, err := f.Stat()
 	if err != nil {
 		return 0, err
 	}
@@ -29,7 +23,7 @@ func (c Uint32Mmap) Count(r io.Reader) (int, error) {
 		return 0, nil
 	}
 
-	data, err := syscall.Mmap(int(file.Fd()), 0, size, syscall.PROT_READ, syscall.MAP_SHARED)
+	data, err := syscall.Mmap(int(f.Fd()), 0, size, syscall.PROT_READ, syscall.MAP_SHARED)
 	if err != nil {
 		return 0, err
 	}

@@ -3,7 +3,7 @@ package counter
 import (
 	"bufio"
 	"fmt"
-	"io"
+	"os"
 )
 
 type BitmapCounter struct{}
@@ -12,9 +12,9 @@ func (c BitmapCounter) Name() string {
 	return "bitmap"
 }
 
-func (c BitmapCounter) Count(r io.Reader) (int, error) {
+func (c BitmapCounter) Count(f *os.File) (int, error) {
 	bitmap := make([]byte, 1<<29)
-	scanner := bufio.NewScanner(r)
+	scanner := bufio.NewScanner(f)
 	count := 0
 
 	for scanner.Scan() {

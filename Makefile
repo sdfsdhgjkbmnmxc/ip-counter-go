@@ -4,11 +4,10 @@ test: testdata
 	go test -v ./internal/...
 
 bench: testdata
-	go test -bench=BenchmarkCounter -benchtime=3s ./internal/...
+	go test -bench=BenchmarkCounter -benchtime=2s ./internal/...
 
 testdata:
 	@mkdir -p testdata
-	@[ -f testdata/ips_0.txt ]    || go run ./cmd/generate-testdata 0 > testdata/ips_0.txt
 	@[ -f testdata/ips_10.txt ]   || go run ./cmd/generate-testdata 10 > testdata/ips_10.txt
 	@[ -f testdata/ips_1k.txt ]   || go run ./cmd/generate-testdata 1000 > testdata/ips_1k.txt
 	@[ -f testdata/ips_10k.txt ]  || go run ./cmd/generate-testdata 10000 > testdata/ips_10k.txt

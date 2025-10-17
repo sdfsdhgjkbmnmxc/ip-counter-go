@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
+	"github.com/dustin/go-humanize"
 )
 
 type NaiveCounter struct {
@@ -16,7 +18,10 @@ func (c NaiveCounter) Name() string {
 	if c.InitialBufferSize == 0 && c.MaxBufferSize == 0 {
 		return "naive"
 	}
-	return fmt.Sprintf("naive (init_buf=%d, max_buf=%d, cap=%d)", c.InitialBufferSize, c.MaxBufferSize, c.Capacity)
+	return fmt.Sprintf("naive (init_buf=%s, max_buf=%s, cap=%d)",
+		humanize.IBytes(uint64(c.InitialBufferSize)),
+		humanize.IBytes(uint64(c.MaxBufferSize)),
+		c.Capacity)
 }
 
 func (c NaiveCounter) Count(f *os.File) (int, error) {

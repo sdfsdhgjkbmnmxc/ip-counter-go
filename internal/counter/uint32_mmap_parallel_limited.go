@@ -5,19 +5,26 @@ import (
 	"os"
 	"sync"
 	"syscall"
+
+	"github.com/dustin/go-humanize"
 )
 
-type Uint32MmapParallel struct {
-	Workers int
+type Uint32MmapParallelLimited struct {
+	Workers   int
+	ChunkSize int
 }
 
-func (c Uint32MmapParallel) Name() string {
-	return fmt.Sprintf("uint32_mmap_parallel(w=%d)", c.Workers)
+func (c Uint32MmapParallelLimited) Name() string {
+	return fmt.Sprintf("uint32_mmap_parallel(w=%d, cs=%s)", c.Workers, humanize.IBytes(uint64(c.ChunkSize)))
 }
 
-func (c Uint32MmapParallel) Count(f *os.File) (int, error) {
+func (c Uint32MmapParallelLimited) Count(f *os.File) (int, error) {
 	if c.Workers < 1 {
 		return 0, fmt.Errorf("workers must be >= 1")
+	}
+
+	if c.ChunkSize < 1 {
+		return 0, fmt.Errorf("chunk size must be >= 1")
 	}
 
 	stat, err := f.Stat()
@@ -39,60 +46,60 @@ func (c Uint32MmapParallel) Count(f *os.File) (int, error) {
 	return len(c.mergeResults(c.processChunksParallel(data, c.splitChunks(data)))), nil
 }
 
-func (c Uint32MmapParallel) splitChunks(data []byte) []chunk {
+func (c Uint32MmapParallelLimited) splitChunks(data []byte) []chunk {
 	size := len(data)
-	minSize := avgIPv4size * 10
-
-	actualWorkers := c.Workers
-	if size < minSize*actualWorkers {
-		actualWorkers = size / minSize
-		if actualWorkers < 1 {
-			actualWorkers = 1
-		}
-	}
-
-	chunkSize := size / actualWorkers
-	chunks := make([]chunk, actualWorkers)
+	chunks := make([]chunk, 0, (size+c.ChunkSize-1)/c.ChunkSize)
 
 	start := 0
-	for i := 0; i < actualWorkers; i++ {
-		end := start + chunkSize
-
-		if i == actualWorkers-1 {
+	for start < size {
+		end := start + c.ChunkSize
+		if end > size {
 			end = size
-		} else {
-			for end < size && data[end] != '\n' {
-				end++
-			}
-			if end < size {
+		}
+
+		if end < size {
+			for end < size && data[end] != '\n' || end < size {
 				end++
 			}
 		}
 
-		chunks[i] = chunk{start: start, end: end}
+		chunks = append(chunks, chunk{start: start, end: end})
 		start = end
 	}
 
 	return chunks
 }
 
-func (c Uint32MmapParallel) processChunksParallel(data []byte, chunks []chunk) []map[uint32]struct{} {
+func (c Uint32MmapParallelLimited) processChunksParallel(data []byte, chunks []chunk) []map[uint32]struct{} {
 	var wg sync.WaitGroup
 	results := make([]map[uint32]struct{}, len(chunks))
 
-	for i, ch := range chunks {
+	chunkChan := make(chan int, len(chunks))
+	for i := range chunks {
+		chunkChan <- i
+	}
+	close(chunkChan)
+
+	numWorkers := c.Workers
+	if numWorkers > len(chunks) {
+		numWorkers = len(chunks)
+	}
+
+	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
-		go func(idx int, ch chunk) {
+		go func() {
 			defer wg.Done()
-			results[idx] = c.processChunk(data, ch)
-		}(i, ch)
+			for idx := range chunkChan {
+				results[idx] = c.processChunk(data, chunks[idx])
+			}
+		}()
 	}
 
 	wg.Wait()
 	return results
 }
 
-func (c Uint32MmapParallel) processChunk(data []byte, ch chunk) map[uint32]struct{} {
+func (c Uint32MmapParallelLimited) processChunk(data []byte, ch chunk) map[uint32]struct{} {
 	seen := make(map[uint32]struct{}, maxCapacity(ch.size()/avgIPv4size))
 	lineStart := ch.start
 
@@ -116,7 +123,7 @@ func (c Uint32MmapParallel) processChunk(data []byte, ch chunk) map[uint32]struc
 	return seen
 }
 
-func (c Uint32MmapParallel) mergeResults(results []map[uint32]struct{}) map[uint32]struct{} {
+func (c Uint32MmapParallelLimited) mergeResults(results []map[uint32]struct{}) map[uint32]struct{} {
 	totalSize := 0
 	for _, result := range results {
 		totalSize += len(result)

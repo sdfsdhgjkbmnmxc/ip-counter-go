@@ -1,6 +1,6 @@
 .PHONY: test bench testdata testdata-large
 
-test:
+test: testdata
 	go test -v ./...
 
 bench: testdata
@@ -8,6 +8,8 @@ bench: testdata
 
 testdata:
 	@mkdir -p testdata
+	@[ -f testdata/ips_0.txt ]    || go run ./cmd/generate-testdata 0 > testdata/ips_0.txt
+	@[ -f testdata/ips_10.txt ]   || go run ./cmd/generate-testdata 10 > testdata/ips_10.txt
 	@[ -f testdata/ips_1k.txt ]   || go run ./cmd/generate-testdata 1000 > testdata/ips_1k.txt
 	@[ -f testdata/ips_10k.txt ]  || go run ./cmd/generate-testdata 10000 > testdata/ips_10k.txt
 	@[ -f testdata/ips_100k.txt ] || go run ./cmd/generate-testdata 100000 > testdata/ips_100k.txt

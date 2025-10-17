@@ -14,7 +14,9 @@ var Counters = []IPAddrCounter{
 	&Uint32Map{},
 	&Uint32Mmap{},
 	&Uint32MmapParallel{Workers: 2},
+	&Uint32MmapParallel{Workers: 4},
 	&Uint32MmapParallel{Workers: 8},
+	&Uint32MmapParallel{Workers: 16},
 	&BitmapCounter{},
 	&BashSort{},
 }

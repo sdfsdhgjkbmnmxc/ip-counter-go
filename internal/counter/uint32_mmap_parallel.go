@@ -24,6 +24,10 @@ func (c Uint32MmapParallel) Name() string {
 	return fmt.Sprintf("uint32_mmap_parallel(workers=%d)", c.Workers)
 }
 
+func (c Uint32MmapParallel) minChunkSize() int {
+	return avgIPv4size * 10
+}
+
 func (c Uint32MmapParallel) Count(r io.Reader) (int, error) {
 	if c.Workers < 1 {
 		return 0, fmt.Errorf("workers must be >= 1")
@@ -55,14 +59,24 @@ func (c Uint32MmapParallel) Count(r io.Reader) (int, error) {
 
 func (c Uint32MmapParallel) splitChunks(data []byte) []chunk {
 	size := len(data)
-	chunkSize := size / c.Workers
-	chunks := make([]chunk, c.Workers)
+	minSize := c.minChunkSize()
+
+	actualWorkers := c.Workers
+	if size < minSize*actualWorkers {
+		actualWorkers = size / minSize
+		if actualWorkers < 1 {
+			actualWorkers = 1
+		}
+	}
+
+	chunkSize := size / actualWorkers
+	chunks := make([]chunk, actualWorkers)
 
 	start := 0
-	for i := 0; i < c.Workers; i++ {
+	for i := 0; i < actualWorkers; i++ {
 		end := start + chunkSize
 
-		if i == c.Workers-1 {
+		if i == actualWorkers-1 {
 			end = size
 		} else {
 			for end < size && data[end] != '\n' {

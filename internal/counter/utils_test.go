@@ -41,3 +41,42 @@ func TestParseIPv4(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkParseIPv4(b *testing.B) {
+	testCases := []string{
+		"0.0.0.0",
+		"127.0.0.1",
+		"192.168.1.1",
+		"255.255.255.255",
+	}
+
+	for _, tc := range testCases {
+		b.Run(tc, func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				_, _ = parseIPv4(tc)
+			}
+		})
+	}
+}
+
+func BenchmarkParseIPv4FromBytes(b *testing.B) {
+	testCases := []struct {
+		name string
+		data []byte
+	}{
+		{"short", []byte("0.0.0.0")},
+		{"localhost", []byte("127.0.0.1")},
+		{"private", []byte("192.168.1.1")},
+		{"max", []byte("255.255.255.255")},
+	}
+
+	for _, tc := range testCases {
+		b.Run(tc.name, func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				_, _ = parseIPv4FromBytes(tc.data)
+			}
+		})
+	}
+}

@@ -1,4 +1,4 @@
-package counter
+package counters
 
 import (
 	"fmt"
@@ -8,13 +8,21 @@ import (
 	"github.com/sdfsdhgjkbmnmxc/ip-counter-go/internal/u32"
 )
 
-type MapCounter struct{}
-
-func (c MapCounter) Name() string {
-	return "MapCounter"
+func NewMMapCounter(name string, NewSet func(fileSize int) u32.Set) MMapCounter {
+	return MMapCounter{
+		name:   name,
+		newSet: NewSet,
+	}
 }
 
-func (c MapCounter) Count(f *os.File) (int, error) {
+type MMapCounter struct {
+	name   string
+	newSet func(fileSize int) u32.Set
+}
+
+func (c MMapCounter) Name() string { return c.name }
+
+func (c MMapCounter) Count(f *os.File) (int, error) {
 	stat, err := f.Stat()
 	if err != nil {
 		return 0, err
@@ -31,7 +39,7 @@ func (c MapCounter) Count(f *os.File) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
-	seen := u32.NewMapSet(maxCapacity(size / avgIPv4size))
+	seen := c.newSet(size)
 	start := 0
 
 	for i := 0; i < len(data); i++ {

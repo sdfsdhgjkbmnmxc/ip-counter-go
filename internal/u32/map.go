@@ -1,7 +1,5 @@
 package u32
 
-const MaxMapSetElements = 28_000_000
-
 func NewMapSet(capacity int) Set {
 	return &mapSet{
 		m: make(map[uint32]struct{}, capacity),

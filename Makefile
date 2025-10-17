@@ -1,5 +1,8 @@
 .PHONY: test bench testdata testdata-large
 
+sample:
+	go run cmd/ip-counter/main.go testdata/ips_10m.txt -method=exact
+
 test: testdata
 	go test -v ./internal/...
 
@@ -7,23 +10,19 @@ bench: testdata
 	go test -bench=BenchmarkCounter -benchtime=3s ./internal/...
 
 testdata:
-	@mkdir -p testdata
-	@[ -f testdata/ips_10.txt ]   || go run ./cmd/generate-testdata 10 > testdata/ips_10.txt
-	@[ -f testdata/ips_1k.txt ]   || go run ./cmd/generate-testdata 1000 > testdata/ips_1k.txt
-	@[ -f testdata/ips_10k.txt ]  || go run ./cmd/generate-testdata 10000 > testdata/ips_10k.txt
-	@[ -f testdata/ips_100k.txt ] || go run ./cmd/generate-testdata 100000 > testdata/ips_100k.txt
-	@[ -f testdata/ips_200k.txt ] || go run ./cmd/generate-testdata 200000 > testdata/ips_200k.txt
-	@[ -f testdata/ips_500k.txt ] || go run ./cmd/generate-testdata 500000 > testdata/ips_500k.txt
-	@[ -f testdata/ips_1m.txt ]   || go run ./cmd/generate-testdata 1000000 > testdata/ips_1m.txt
-	@[ -f testdata/ips_2m.txt ]   || go run ./cmd/generate-testdata 2000000 > testdata/ips_2m.txt
-	@[ -f testdata/ips_5m.txt ]   || go run ./cmd/generate-testdata 5000000 > testdata/ips_5m.txt
-	@[ -f testdata/ips_10m.txt ]  || go run ./cmd/generate-testdata 10000000 > testdata/ips_10m.txt
+	mkdir -p testdata
+	[ -f testdata/ips_1k.txt ]   || go run ./cmd/generate-testdata 1000 > testdata/ips_1k.txt
+	[ -f testdata/ips_10k.txt ]  || go run ./cmd/generate-testdata 10000 > testdata/ips_10k.txt
+	[ -f testdata/ips_100k.txt ] || go run ./cmd/generate-testdata 100000 > testdata/ips_100k.txt
+	[ -f testdata/ips_1m.txt ]   || go run ./cmd/generate-testdata 1000000 > testdata/ips_1m.txt
+	[ -f testdata/ips_10m.txt ]  || go run ./cmd/generate-testdata 10000000 > testdata/ips_10m.txt
+	[ -f testdata/ips_100m.txt ] || go run ./cmd/generate-testdata 100000000 > testdata/ips_100m.txt
 
 testdata-large:
-	@mkdir -p testdata
-	@echo "Downloading large test file..."
-	@wget -q https://ecwid-vgv-storage.s3.eu-central-1.amazonaws.com/ip_addresses.zip
-	@echo "Extracting..."
-	@unzip -q ip_addresses.zip -d testdata/
-	@rm ip_addresses.zip
-	@ls -lh testdata/
+	mkdir -p testdata
+	echo "Downloading large test file..."
+	wget -q https://ecwid-vgv-storage.s3.eu-central-1.amazonaws.com/ip_addresses.zip
+	echo "Extracting..."
+	unzip -q ip_addresses.zip -d testdata/
+	rm ip_addresses.zip
+	ls -lh testdata/

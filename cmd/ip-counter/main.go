@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sdfsdhgjkbmnmxc/ip-counter-go/internal/counter"
+	"github.com/sdfsdhgjkbmnmxc/ip-counter-go/internal/counters"
 )
 
 func main() {
-	method := flag.String("method", counter.MapCounter{}.Name(), "counting method")
+	method := flag.String("method", "ComboSet", "counting method")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -17,16 +17,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	var methodImpl counter.IPAddrCounter
-	for _, c := range counter.Counters {
-		if c.Name() == *method {
-			methodImpl = c
-			break
-		}
-	}
-
-	if methodImpl == nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Unknown method: %s\n", *method)
+	impl := counters.Registry.Get(*method)
+	if impl == nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Unknown method: %s. %s\n", *method, counters.Registry.Help())
 		os.Exit(1)
 	}
 
@@ -38,7 +31,7 @@ func main() {
 	}
 	defer func() { _ = file.Close() }()
 
-	count, err := methodImpl.Count(file)
+	count, err := impl.Count(file)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error counting IPs: %v\n", err)
 		os.Exit(1)

@@ -1,11 +1,11 @@
-package counter
+package counters
 
 import (
 	"fmt"
 )
 
 const (
-	avgIPv4size   = 15
+	avgIPv4size   = 13
 	maxIPv4number = 1 << 32
 )
 

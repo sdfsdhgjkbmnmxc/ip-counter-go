@@ -1,7 +1,6 @@
-package counter
+package counters
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -10,12 +9,10 @@ import (
 
 type BashCounter struct{}
 
-func (c BashCounter) Name() string {
-	return "BashCounter"
-}
+func (c BashCounter) Name() string { return "BashCounter" }
 
 func (c BashCounter) Count(f *os.File) (int, error) {
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("sort -u %s | wc -l", f.Name()))
+	cmd := exec.Command("bash", "-c", "sort -u \"$0\" | wc -l", f.Name())
 	output, err := cmd.Output()
 	if err != nil {
 		return 0, err

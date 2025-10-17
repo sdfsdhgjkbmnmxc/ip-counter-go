@@ -1,4 +1,4 @@
-package counter
+package counters
 
 import (
 	"bufio"
@@ -7,9 +7,7 @@ import (
 
 type NaiveCounter struct{}
 
-func (c NaiveCounter) Name() string {
-	return "NaiveCounter"
-}
+func (c NaiveCounter) Name() string { return "NaiveCounter" }
 
 func (c NaiveCounter) Count(f *os.File) (int, error) {
 	seen := make(map[string]struct{})

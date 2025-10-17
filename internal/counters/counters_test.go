@@ -1,4 +1,4 @@
-package counter
+package counters
 
 import (
 	"errors"
@@ -21,7 +21,7 @@ func TestResultsEqual(t *testing.T) {
 	for _, path := range testFiles {
 		t.Run(filepath.Base(path), func(t *testing.T) {
 			var results = make(map[int][]string)
-			for _, counter := range Counters {
+			for _, counter := range Registry {
 				res, err := func() (int, error) {
 					f, err := os.Open(path)
 					if err != nil {
@@ -67,7 +67,7 @@ func BenchmarkCounter(b *testing.B) {
 
 	for _, path := range testFiles {
 		b.Run(filepath.Base(path), func(b *testing.B) {
-			for _, counter := range Counters {
+			for _, counter := range Registry {
 				b.Run(counter.Name(), func(b *testing.B) {
 					b.ReportAllocs()
 					for i := 0; i < b.N; i++ {

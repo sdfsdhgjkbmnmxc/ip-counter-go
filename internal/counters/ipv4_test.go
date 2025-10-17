@@ -1,9 +1,9 @@
-package counter
+package counters
 
 import "testing"
 
 func TestParseIPv4(t *testing.T) {
-	tests := []struct {
+	for _, tt := range []struct {
 		input   string
 		want    uint32
 		wantErr bool
@@ -15,7 +15,6 @@ func TestParseIPv4(t *testing.T) {
 		{"127.0.0.1", 0x7F000001, false},
 		{"8.8.8.8", 0x08080808, false},
 		{"1.2.3.4", 0x01020304, false},
-
 		{"256.0.0.0", 0, true},
 		{"1.256.1.1", 0, true},
 		{"1.1.1.256", 0, true},
@@ -26,9 +25,7 @@ func TestParseIPv4(t *testing.T) {
 		{"1.2.3.4.5", 0, true},
 		{"192.168.1", 0, true},
 		{"192.168..1", 0, true},
-	}
-
-	for _, tt := range tests {
+	} {
 		t.Run(tt.input, func(t *testing.T) {
 			got, err := parseIPv4(tt.input)
 			if (err != nil) != tt.wantErr {
@@ -43,14 +40,12 @@ func TestParseIPv4(t *testing.T) {
 }
 
 func BenchmarkParseIPv4(b *testing.B) {
-	testCases := []string{
+	for _, tc := range []string{
 		"0.0.0.0",
 		"127.0.0.1",
 		"192.168.1.1",
 		"255.255.255.255",
-	}
-
-	for _, tc := range testCases {
+	} {
 		b.Run(tc, func(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
@@ -61,7 +56,7 @@ func BenchmarkParseIPv4(b *testing.B) {
 }
 
 func BenchmarkParseIPv4FromBytes(b *testing.B) {
-	testCases := []struct {
+	for _, tc := range []struct {
 		name string
 		data []byte
 	}{
@@ -69,9 +64,7 @@ func BenchmarkParseIPv4FromBytes(b *testing.B) {
 		{"localhost", []byte("127.0.0.1")},
 		{"private", []byte("192.168.1.1")},
 		{"max", []byte("255.255.255.255")},
-	}
-
-	for _, tc := range testCases {
+	} {
 		b.Run(tc.name, func(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {

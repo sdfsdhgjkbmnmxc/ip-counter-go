@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+
+	"github.com/sdfsdhgjkbmnmxc/ip-counter-go/internal/u32"
 )
 
-type BitmapMmapRoaring struct{}
+type MapCounter struct{}
 
-func (c BitmapMmapRoaring) Name() string {
-	return "bitmap_mmap_roaring"
+func (c MapCounter) Name() string {
+	return "MapCounter"
 }
 
-func (c BitmapMmapRoaring) Count(f *os.File) (int, error) {
+func (c MapCounter) Count(f *os.File) (int, error) {
 	stat, err := f.Stat()
 	if err != nil {
 		return 0, err
@@ -29,7 +31,7 @@ func (c BitmapMmapRoaring) Count(f *os.File) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
-	seen := newIPv4Roaring(12)
+	seen := u32.NewMapSet(maxCapacity(size / avgIPv4size))
 	start := 0
 
 	for i := 0; i < len(data); i++ {

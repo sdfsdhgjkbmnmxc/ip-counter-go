@@ -8,13 +8,13 @@ import (
 	"strings"
 )
 
-type BashSort struct{}
+type BashCounter struct{}
 
-func (c BashSort) Name() string {
-	return "bash_sort"
+func (c BashCounter) Name() string {
+	return "BashCounter"
 }
 
-func (c BashSort) Count(f *os.File) (int, error) {
+func (c BashCounter) Count(f *os.File) (int, error) {
 	cmd := exec.Command("bash", "-c", fmt.Sprintf("sort -u %s | wc -l", f.Name()))
 	output, err := cmd.Output()
 	if err != nil {

@@ -64,11 +64,3 @@ func parseIPv4FromBytes(s []byte) (uint32, error) {
 
 	return ip, nil
 }
-
-type chunk struct {
-	start, end int
-}
-
-func (c chunk) size() int {
-	return c.end - c.start
-}

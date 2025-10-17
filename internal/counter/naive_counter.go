@@ -8,7 +8,7 @@ import (
 type NaiveCounter struct{}
 
 func (c NaiveCounter) Name() string {
-	return "naive"
+	return "NaiveCounter"
 }
 
 func (c NaiveCounter) Count(f *os.File) (int, error) {

@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+
+	"github.com/sdfsdhgjkbmnmxc/ip-counter-go/internal/u32"
 )
 
-type Uint32Mmap struct{}
+type BitmapCounter struct{}
 
-func (c Uint32Mmap) Name() string {
-	return "uint32_mmap"
-}
+func (c BitmapCounter) Name() string { return "bitmap_counter" }
 
-func (c Uint32Mmap) Count(f *os.File) (int, error) {
+func (c BitmapCounter) Count(f *os.File) (int, error) {
 	stat, err := f.Stat()
 	if err != nil {
 		return 0, err
@@ -29,8 +29,8 @@ func (c Uint32Mmap) Count(f *os.File) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
-	seen := newIPv4Map(maxCapacity(size / avgIPv4size))
 	start := 0
+	seen := u32.NewBitmapSet()
 
 	for i := 0; i < len(data); i++ {
 		if data[i] == '\n' {

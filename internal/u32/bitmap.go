@@ -1,6 +1,6 @@
 package u32
 
-func BitmapSet() Set {
+func NewBitmapSet() Set {
 	return &bitmapSet{
 		bitmap: make([]byte, 1<<29),
 	}

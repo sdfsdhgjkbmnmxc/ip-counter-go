@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	method := flag.String("method", counter.Uint32Mmap{}.Name(), "counting method")
+	method := flag.String("method", counter.MapCounter{}.Name(), "counting method")
 	flag.Parse()
 
 	if flag.NArg() < 1 {

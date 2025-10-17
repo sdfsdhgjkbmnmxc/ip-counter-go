@@ -13,7 +13,7 @@ func (c Uint32Map) Name() string {
 }
 
 func (c Uint32Map) Count(f *os.File) (int, error) {
-	seen := make(map[uint32]struct{})
+	seen := make(IPv4set)
 	scanner := bufio.NewScanner(f)
 
 	for scanner.Scan() {

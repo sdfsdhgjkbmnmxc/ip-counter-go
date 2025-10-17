@@ -15,7 +15,7 @@ type Uint32MmapParallelLimited struct {
 }
 
 func (c Uint32MmapParallelLimited) Name() string {
-	return fmt.Sprintf("uint32_mmap_parallel(w=%d, cs=%s)", c.Workers, humanize.IBytes(uint64(c.ChunkSize)))
+	return fmt.Sprintf("uint32_mmap_parallel_limited(w=%d, cs=%s)", c.Workers, humanize.IBytes(uint64(c.ChunkSize)))
 }
 
 func (c Uint32MmapParallelLimited) Count(f *os.File) (int, error) {
@@ -43,7 +43,7 @@ func (c Uint32MmapParallelLimited) Count(f *os.File) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
-	return len(c.mergeResults(c.processChunksParallel(data, c.splitChunks(data)))), nil
+	return len(c.processChunksParallel(data, c.splitChunks(data))), nil
 }
 
 func (c Uint32MmapParallelLimited) splitChunks(data []byte) []chunk {
@@ -70,10 +70,7 @@ func (c Uint32MmapParallelLimited) splitChunks(data []byte) []chunk {
 	return chunks
 }
 
-func (c Uint32MmapParallelLimited) processChunksParallel(data []byte, chunks []chunk) []map[uint32]struct{} {
-	var wg sync.WaitGroup
-	results := make([]map[uint32]struct{}, len(chunks))
-
+func (c Uint32MmapParallelLimited) processChunksParallel(data []byte, chunks []chunk) IPv4set {
 	chunkChan := make(chan int, len(chunks))
 	for i := range chunks {
 		chunkChan <- i
@@ -85,22 +82,29 @@ func (c Uint32MmapParallelLimited) processChunksParallel(data []byte, chunks []c
 		numWorkers = len(chunks)
 	}
 
+	resultChan := make(chan IPv4set, numWorkers)
+
+	var wg sync.WaitGroup
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for idx := range chunkChan {
-				results[idx] = c.processChunk(data, chunks[idx])
+				resultChan <- c.processChunk(data, chunks[idx])
 			}
 		}()
 	}
 
-	wg.Wait()
-	return results
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	return c.mergeResults(resultChan)
 }
 
-func (c Uint32MmapParallelLimited) processChunk(data []byte, ch chunk) map[uint32]struct{} {
-	seen := make(map[uint32]struct{}, maxCapacity(ch.size()/avgIPv4size))
+func (c Uint32MmapParallelLimited) processChunk(data []byte, ch chunk) IPv4set {
+	seen := make(IPv4set, maxCapacity(ch.size()/avgIPv4size))
 	lineStart := ch.start
 
 	for i := ch.start; i < ch.end; i++ {
@@ -123,18 +127,12 @@ func (c Uint32MmapParallelLimited) processChunk(data []byte, ch chunk) map[uint3
 	return seen
 }
 
-func (c Uint32MmapParallelLimited) mergeResults(results []map[uint32]struct{}) map[uint32]struct{} {
-	totalSize := 0
-	for _, result := range results {
-		totalSize += len(result)
-	}
-
-	total := make(map[uint32]struct{}, maxCapacity(totalSize))
-	for _, result := range results {
+func (c Uint32MmapParallelLimited) mergeResults(resultChan <-chan IPv4set) IPv4set {
+	total := make(IPv4set)
+	for result := range resultChan {
 		for ip := range result {
 			total[ip] = struct{}{}
 		}
 	}
-
 	return total
 }

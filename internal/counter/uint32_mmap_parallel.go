@@ -36,7 +36,7 @@ func (c Uint32MmapParallel) Count(f *os.File) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
-	return len(c.mergeResults(c.processChunksParallel(data, c.splitChunks(data)))), nil
+	return len(c.processChunksParallel(data, c.splitChunks(data))), nil
 }
 
 func (c Uint32MmapParallel) splitChunks(data []byte) []chunk {
@@ -76,24 +76,28 @@ func (c Uint32MmapParallel) splitChunks(data []byte) []chunk {
 	return chunks
 }
 
-func (c Uint32MmapParallel) processChunksParallel(data []byte, chunks []chunk) []map[uint32]struct{} {
-	var wg sync.WaitGroup
-	results := make([]map[uint32]struct{}, len(chunks))
+func (c Uint32MmapParallel) processChunksParallel(data []byte, chunks []chunk) IPv4set {
+	resultChan := make(chan IPv4set, len(chunks))
 
-	for i, ch := range chunks {
+	var wg sync.WaitGroup
+	for _, ch := range chunks {
 		wg.Add(1)
-		go func(idx int, ch chunk) {
+		go func(ch chunk) {
 			defer wg.Done()
-			results[idx] = c.processChunk(data, ch)
-		}(i, ch)
+			resultChan <- c.processChunk(data, ch)
+		}(ch)
 	}
 
-	wg.Wait()
-	return results
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	return c.mergeResults(resultChan)
 }
 
-func (c Uint32MmapParallel) processChunk(data []byte, ch chunk) map[uint32]struct{} {
-	seen := make(map[uint32]struct{}, maxCapacity(ch.size()/avgIPv4size))
+func (c Uint32MmapParallel) processChunk(data []byte, ch chunk) IPv4set {
+	seen := make(IPv4set, maxCapacity(ch.size()/avgIPv4size))
 	lineStart := ch.start
 
 	for i := ch.start; i < ch.end; i++ {
@@ -116,18 +120,12 @@ func (c Uint32MmapParallel) processChunk(data []byte, ch chunk) map[uint32]struc
 	return seen
 }
 
-func (c Uint32MmapParallel) mergeResults(results []map[uint32]struct{}) map[uint32]struct{} {
-	totalSize := 0
-	for _, result := range results {
-		totalSize += len(result)
-	}
-
-	total := make(map[uint32]struct{}, maxCapacity(totalSize))
-	for _, result := range results {
+func (c Uint32MmapParallel) mergeResults(resultChan <-chan IPv4set) IPv4set {
+	total := make(IPv4set)
+	for result := range resultChan {
 		for ip := range result {
 			total[ip] = struct{}{}
 		}
 	}
-
 	return total
 }

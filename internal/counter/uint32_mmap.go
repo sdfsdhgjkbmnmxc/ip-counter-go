@@ -29,7 +29,7 @@ func (c Uint32Mmap) Count(f *os.File) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
-	seen := make(map[uint32]struct{}, maxCapacity(size/avgIPv4size))
+	seen := make(IPv4set, maxCapacity(size/avgIPv4size))
 	start := 0
 
 	for i := 0; i < len(data); i++ {

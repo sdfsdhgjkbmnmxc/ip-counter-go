@@ -9,7 +9,6 @@ type IPAddrCounter interface {
 
 var Counters = []IPAddrCounter{
 	&NaiveCounter{InitialBufferSize: 64 * 1024, MaxBufferSize: 4096}, // go defaults
-	&NaiveCounter{InitialBufferSize: 64 * 1024, MaxBufferSize: 16},
 	&NaiveCounter{InitialBufferSize: 64 * 1024, MaxBufferSize: 16, Capacity: 1024},
 	&NetIPMap{},
 	&Uint32Map{},

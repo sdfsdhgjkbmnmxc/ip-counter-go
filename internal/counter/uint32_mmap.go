@@ -33,7 +33,7 @@ func (c Uint32Mmap) Count(r io.Reader) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer syscall.Munmap(data)
+	defer func() { _ = syscall.Munmap(data) }()
 
 	seen := make(map[uint32]struct{})
 	start := 0

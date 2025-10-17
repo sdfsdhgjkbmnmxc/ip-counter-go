@@ -40,3 +40,8 @@ For maximum performance:
 - **Memory-mapped I/O**: Reads files via `mmap` instead of standard I/O (stdin not supported)
 - **Custom IPv4 parser**: Specialized parser converts addresses to `uint32`, significantly faster than standard library
 - **Simple input format**: Expects valid IPv4 addresses, one per line (`\n` separated)
+
+Attempted optimizations that didn't deliver:
+
+- **Roaring bitmap** with various segment sizes: Added complexity without performance gains. For randomly distributed IPs, created too many small segments with excessive allocations, making it slower than simple bitmap. Simple strategy switching (map → bitmap based on dataset size) proved more effective
+- **Parallel processing** with goroutines: Only ~5-10% speedup while significantly complicating the codebase

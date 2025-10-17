@@ -13,6 +13,7 @@ var Counters = []IPAddrCounter{
 	&NetIPMap{},
 	&Uint32Map{},
 	&Uint32Mmap{},
+	&Uint32MmapParallel{Workers: 4},
 	&BitmapCounter{},
 	&BashSort{},
 }

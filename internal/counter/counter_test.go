@@ -36,7 +36,10 @@ func TestResultsEqual(t *testing.T) {
 				results[res] = counter.Name()
 			}
 			if len(results) != 1 {
-				t.Errorf("Inconsistent results for file %s: %d", path, len(results))
+				t.Errorf("Inconsistent results for file %s: got %d different results", path, len(results))
+				for count, name := range results {
+					t.Logf("  %s: %d", name, count)
+				}
 			}
 		})
 	}

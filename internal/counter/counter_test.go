@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -19,7 +20,7 @@ func TestResultsEqual(t *testing.T) {
 
 	for _, path := range testFiles {
 		t.Run(filepath.Base(path), func(t *testing.T) {
-			var results = make(map[int]string)
+			var results = make(map[int][]string)
 			for _, counter := range Counters {
 				res, err := func() (int, error) {
 					f, err := os.Open(path)
@@ -33,12 +34,12 @@ func TestResultsEqual(t *testing.T) {
 				if err != nil {
 					t.Fatalf("Error during counting with %s: %v", counter.Name(), err)
 				}
-				results[res] = counter.Name()
+				results[res] = append(results[res], counter.Name())
 			}
 			if len(results) != 1 {
 				t.Errorf("Inconsistent results for file %s: got %d different results", path, len(results))
-				for count, name := range results {
-					t.Logf("  %s: %d", name, count)
+				for count, names := range results {
+					t.Logf("  %s: %d", strings.Join(names, ", "), count)
 				}
 			}
 		})

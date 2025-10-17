@@ -13,86 +13,64 @@ type impl struct {
 func getImpl() []impl {
 	return []impl{
 		{"map", func() uint32set { return newIPv4Map(0) }},
-		{"bitset", newIPv4BitSet},
+		{"roaring6", func() uint32set { return newIPv4Roaring(6) }},
+		{"roaring8", func() uint32set { return newIPv4Roaring(8) }},
+		{"roaring12", func() uint32set { return newIPv4Roaring(12) }},
+		{"roaring16", func() uint32set { return newIPv4Roaring(16) }},
+		{"roaring20", func() uint32set { return newIPv4Roaring(20) }},
+		{"roaring24", func() uint32set { return newIPv4Roaring(24) }},
+		{"bitmap", newIPv4Bitmap},
 	}
 }
 
-func TestUint32SetBasics(t *testing.T) {
-	for _, impl := range getImpl() {
-		t.Run(impl.name, func(t *testing.T) {
-			s := impl.new()
-
-			s.Add(0x01020304)
-			if s.Count() != 1 {
-				t.Errorf("Count() = %d, want 1", s.Count())
-			}
-
-			s.Add(0x01020304)
-			if s.Count() != 1 {
-				t.Errorf("Count() after duplicate = %d, want 1", s.Count())
-			}
-
-			s.Add(0x05060708)
-			if s.Count() != 2 {
-				t.Errorf("Count() = %d, want 2", s.Count())
-			}
-		})
-	}
-}
-
-func TestUint32SetUnion(t *testing.T) {
-	for _, impl := range getImpl() {
-		t.Run(impl.name, func(t *testing.T) {
-			s1 := impl.new()
-			s1.Add(0x01020304)
-			s1.Add(0x05060708)
-
-			s2 := impl.new()
-			s2.Add(0x05060708)
-			s2.Add(0x090A0B0C)
-
-			result := s1.Union(s2)
-			if result.Count() != 3 {
-				t.Errorf("Union Count() = %d, want 3", result.Count())
-			}
-		})
+func getSizes() []int {
+	return []int{
+		100,
+		1_000,
+		10_000,
+		100_000,
+		1_000_000,
+		10_000_000,
 	}
 }
 
 func BenchmarkAdd(b *testing.B) {
-	for _, impl := range getImpl() {
-		b.Run(impl.name, func(b *testing.B) {
-			s := impl.new()
-			b.ReportAllocs()
-			b.ResetTimer()
-
-			for i := 0; i < b.N; i++ {
-				s.Add(uint32(i))
+	for _, size := range getSizes() {
+		b.Run(fmt.Sprintf("size-%d", size), func(b *testing.B) {
+			for _, impl := range getImpl() {
+				b.Run(impl.name, func(b *testing.B) {
+					b.ReportAllocs()
+					for i := 0; i < b.N; i++ {
+						s := impl.new()
+						for j := 0; j < size; j++ {
+							s.Add(uint32(j))
+						}
+						if s.Count() != size {
+							b.Fatalf("Count() = %d, want %d", s.Count(), size)
+						}
+					}
+				})
 			}
 		})
 	}
 }
 
 func BenchmarkUnion(b *testing.B) {
-	for _, size := range []int{
-		100,
-		1000,
-		10000,
-		100000,
-	} {
-		b.Run(fmt.Sprintf("%d", size), func(b *testing.B) {
+	for _, size := range getSizes() {
+		b.Run(fmt.Sprintf("size-%d", size), func(b *testing.B) {
 			for _, impl := range getImpl() {
 				b.Run(impl.name, func(b *testing.B) {
+					b.ReportAllocs()
+
 					s1 := impl.new()
 					s2 := impl.new()
 
+					b.StopTimer()
 					for i := 0; i < size; i++ {
 						s1.Add(uint32(i))
 						s2.Add(uint32(i + size/2))
 					}
-
-					b.ReportAllocs()
-					b.ResetTimer()
+					b.StartTimer()
 
 					for i := 0; i < b.N; i++ {
 						s1Copy := impl.new()

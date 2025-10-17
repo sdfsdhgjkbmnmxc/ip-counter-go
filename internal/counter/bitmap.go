@@ -13,21 +13,20 @@ func (c BitmapCounter) Name() string {
 }
 
 func (c BitmapCounter) Count(f *os.File) (int, error) {
-	bitmap := newIPv4BitSet()
+	seen := newIPv4Bitmap()
 	scanner := bufio.NewScanner(f)
-	
+
 	for scanner.Scan() {
 		ip, err := parseIPv4(scanner.Text())
 		if err != nil {
 			return 0, fmt.Errorf("invalid IP address: %v", err)
 		}
-
-		bitmap.Add(ip)
+		seen.Add(ip)
 	}
 
 	if err := scanner.Err(); err != nil {
 		return 0, err
 	}
 
-	return bitmap.Count(), nil
+	return seen.Count(), nil
 }

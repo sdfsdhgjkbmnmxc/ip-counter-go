@@ -6,13 +6,13 @@ import (
 	"syscall"
 )
 
-type BitmapMmap struct{}
+type BitmapMmapRoaring struct{}
 
-func (c BitmapMmap) Name() string {
-	return "bitmap_mmap"
+func (c BitmapMmapRoaring) Name() string {
+	return "bitmap_mmap_roaring"
 }
 
-func (c BitmapMmap) Count(f *os.File) (int, error) {
+func (c BitmapMmapRoaring) Count(f *os.File) (int, error) {
 	stat, err := f.Stat()
 	if err != nil {
 		return 0, err
@@ -29,7 +29,7 @@ func (c BitmapMmap) Count(f *os.File) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
-	seen := newIPv4Bitmap()
+	seen := newIPv4Roaring(12)
 	start := 0
 
 	for i := 0; i < len(data); i++ {

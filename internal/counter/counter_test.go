@@ -9,8 +9,41 @@ import (
 	"testing"
 )
 
+const testDataPath = "../../testdata/*.txt"
+
+func TestResultsEqual(t *testing.T) {
+	testFiles, err := filepath.Glob(testDataPath)
+	if err != nil {
+		t.Fatalf("Failed to find test files: %v", err)
+	}
+
+	for _, path := range testFiles {
+		t.Run(filepath.Base(path), func(t *testing.T) {
+			var results = make(map[int]string)
+			for _, counter := range Counters {
+				res, err := func() (int, error) {
+					f, err := os.Open(path)
+					if err != nil {
+						return 0, fmt.Errorf("failed to open file %s: %w", path, err)
+					}
+					defer func() { _ = f.Close() }()
+
+					return counter.Count(f)
+				}()
+				if err != nil {
+					t.Fatalf("Error during counting with %s: %v", counter.Name(), err)
+				}
+				results[res] = counter.Name()
+			}
+			if len(results) != 1 {
+				t.Errorf("Inconsistent results for file %s: %d", path, len(results))
+			}
+		})
+	}
+}
+
 func BenchmarkCounter(b *testing.B) {
-	testFiles, err := filepath.Glob("../../testdata/*.txt")
+	testFiles, err := filepath.Glob(testDataPath)
 	if err != nil {
 		b.Fatalf("Failed to find test files: %v", err)
 	}
@@ -49,7 +82,6 @@ func BenchmarkCounter(b *testing.B) {
 							if res == 0 {
 								return errors.New("counter.Count() returned 0")
 							}
-
 							return nil
 						}()
 						if err != nil {

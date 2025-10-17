@@ -3,6 +3,10 @@ package counter
 import "fmt"
 
 func parseIPv4(s string) (uint32, error) {
+	return parseIPv4FromBytes([]byte(s))
+}
+
+func parseIPv4FromBytes(s []byte) (uint32, error) {
 	var ip uint32
 	var octet uint32
 	var shift = 24

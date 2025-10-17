@@ -25,7 +25,6 @@ var Registry = countersRegistry{
 		return u32.NewMapSet(maxCapacity(fileSize / avgIPv4size))
 	}),
 	NaiveCounter{},
-	BashCounter{},
 }
 
 type countersRegistry []IPAddrCounter

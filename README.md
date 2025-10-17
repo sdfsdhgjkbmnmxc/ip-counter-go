@@ -32,4 +32,3 @@ Use `-method` flag to select implementation:
 - **MapSet**: Hash map, memory-efficient for smaller datasets
 - **BitmapSet**: Bitmap, fast on large datasets with fixed 512 MB memory
 - **NaiveCounter**: String-based map without IP parsing (research/comparison)
-- **BashCounter**: External  command (research/comparison)

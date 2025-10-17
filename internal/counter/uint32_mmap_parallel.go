@@ -117,11 +117,23 @@ func (c Uint32MmapParallel) processChunk(data []byte, ch chunk) map[uint32]struc
 }
 
 func (c Uint32MmapParallel) mergeResults(results []map[uint32]struct{}) map[uint32]struct{} {
+	const maxSize = 1 << 32
+
+	totalSize := 0
+	for _, result := range results {
+		totalSize += len(result)
+	}
+
+	if totalSize > maxSize {
+		totalSize = maxSize
+	}
+
 	total := make(map[uint32]struct{})
 	for _, result := range results {
 		for ip := range result {
 			total[ip] = struct{}{}
 		}
 	}
+
 	return total
 }

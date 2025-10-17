@@ -1,3 +1,4 @@
-testdata/
-bin/
+*.prof
 .idea
+bin/
+testdata/

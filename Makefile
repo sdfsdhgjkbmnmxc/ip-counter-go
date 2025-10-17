@@ -1,3 +1,9 @@
+test:
+	go test -v ./...
+
+bench: testdata
+	go test -bench=. -benchmem ./internal/...
+
 testdata:
 	@mkdir -p testdata
 	@[ -f testdata/ips_1k.txt ] || go run ./cmd/generate-testdata 1000 > testdata/ips_1k.txt
@@ -11,13 +17,5 @@ testdata-large:
 	@echo "Extracting..."
 	@unzip -q ip_addresses.zip -d testdata/
 	@rm ip_addresses.zip
+	@mv testdata/ip_addresses testdata/ip_addresses.txt
 	@ls -lh testdata/
-
-test:
-	go test -v ./...
-
-bench: testdata
-	go test -bench=. -benchmem ./internal/...
-
-clean:
-	rm -rf testdata

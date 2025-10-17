@@ -46,11 +46,7 @@ func (c Uint32MmapParallel) Count(r io.Reader) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
-	chunks := c.splitChunks(data)
-	results := c.processChunksParallel(data, chunks)
-	total := c.mergeResults(results)
-
-	return len(total), nil
+	return len(c.mergeResults(c.processChunksParallel(data, c.splitChunks(data)))), nil
 }
 
 func (c Uint32MmapParallel) splitChunks(data []byte) []chunk {
@@ -86,21 +82,21 @@ func (c Uint32MmapParallel) processChunksParallel(data []byte, chunks []chunk) [
 
 	for i, ch := range chunks {
 		wg.Add(1)
-		go func(idx int, start, end int) {
+		go func(idx int, ch chunk) {
 			defer wg.Done()
-			results[idx] = c.processChunk(data, start, end)
-		}(i, ch.start, ch.end)
+			results[idx] = c.processChunk(data, ch)
+		}(i, ch)
 	}
 
 	wg.Wait()
 	return results
 }
 
-func (c Uint32MmapParallel) processChunk(data []byte, start, end int) map[uint32]struct{} {
+func (c Uint32MmapParallel) processChunk(data []byte, ch chunk) map[uint32]struct{} {
 	seen := make(map[uint32]struct{})
-	lineStart := start
+	lineStart := ch.start
 
-	for i := start; i < end; i++ {
+	for i := ch.start; i < ch.end; i++ {
 		if data[i] == '\n' {
 			if i > lineStart {
 				if ip, err := parseIPv4FromBytes(data[lineStart:i]); err == nil {
@@ -111,8 +107,8 @@ func (c Uint32MmapParallel) processChunk(data []byte, start, end int) map[uint32
 		}
 	}
 
-	if lineStart < end {
-		if ip, err := parseIPv4FromBytes(data[lineStart:end]); err == nil {
+	if lineStart < ch.end {
+		if ip, err := parseIPv4FromBytes(data[lineStart:ch.end]); err == nil {
 			seen[ip] = struct{}{}
 		}
 	}

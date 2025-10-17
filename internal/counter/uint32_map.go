@@ -13,7 +13,7 @@ func (c Uint32Map) Name() string {
 }
 
 func (c Uint32Map) Count(f *os.File) (int, error) {
-	seen := make(IPv4set)
+	seen := newIPv4Map(0)
 	scanner := bufio.NewScanner(f)
 
 	for scanner.Scan() {
@@ -21,12 +21,12 @@ func (c Uint32Map) Count(f *os.File) (int, error) {
 		if err != nil {
 			return 0, fmt.Errorf("invalid IP address: %v", err)
 		}
-		seen[ip] = struct{}{}
+		seen.Add(ip)
 	}
 
 	if err := scanner.Err(); err != nil {
 		return 0, err
 	}
 
-	return len(seen), nil
+	return seen.Count(), nil
 }

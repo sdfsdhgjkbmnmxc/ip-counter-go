@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/dustin/go-humanize"
+	"golang.org/x/sync/errgroup"
 )
 
 type Uint32MmapParallelLimited struct {
@@ -43,7 +44,11 @@ func (c Uint32MmapParallelLimited) Count(f *os.File) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
-	return len(c.processChunksParallel(data, c.splitChunks(data))), nil
+	total, err := c.processChunksParallel(data, c.splitChunks(data))
+	if err != nil {
+		return 0, err
+	}
+	return total.Count(), nil
 }
 
 func (c Uint32MmapParallelLimited) splitChunks(data []byte) []chunk {
@@ -70,7 +75,7 @@ func (c Uint32MmapParallelLimited) splitChunks(data []byte) []chunk {
 	return chunks
 }
 
-func (c Uint32MmapParallelLimited) processChunksParallel(data []byte, chunks []chunk) IPv4set {
+func (c Uint32MmapParallelLimited) processChunksParallel(data []byte, chunks []chunk) (uint32set, error) {
 	chunkChan := make(chan int, len(chunks))
 	for i := range chunks {
 		chunkChan <- i
@@ -82,57 +87,58 @@ func (c Uint32MmapParallelLimited) processChunksParallel(data []byte, chunks []c
 		numWorkers = len(chunks)
 	}
 
-	resultChan := make(chan IPv4set, numWorkers)
+	total := newIPv4Map(0)
 
-	var wg sync.WaitGroup
+	var mux sync.Mutex
+	var g errgroup.Group
+
 	for i := 0; i < numWorkers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		g.Go(func() error {
 			for idx := range chunkChan {
-				resultChan <- c.processChunk(data, chunks[idx])
+				result, err := c.processChunk(data, chunks[idx])
+				if err != nil {
+					return err
+				}
+
+				mux.Lock()
+				total = total.Union(result)
+				mux.Unlock()
 			}
-		}()
+			return nil
+		})
 	}
 
-	go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
 
-	return c.mergeResults(resultChan)
+	return total, nil
 }
 
-func (c Uint32MmapParallelLimited) processChunk(data []byte, ch chunk) IPv4set {
-	seen := make(IPv4set, maxCapacity(ch.size()/avgIPv4size))
+func (c Uint32MmapParallelLimited) processChunk(data []byte, ch chunk) (uint32set, error) {
+	seen := newIPv4Map(maxCapacity(ch.size() / avgIPv4size))
 	lineStart := ch.start
 
 	for i := ch.start; i < ch.end; i++ {
 		if data[i] == '\n' {
 			if i > lineStart {
-				if ip, err := parseIPv4FromBytes(data[lineStart:i]); err == nil {
-					seen[ip] = struct{}{}
+				ip, err := parseIPv4FromBytes(data[lineStart:i])
+				if err != nil {
+					return nil, fmt.Errorf("invalid IP address: %v", err)
 				}
+				seen.Add(ip)
 			}
 			lineStart = i + 1
 		}
 	}
 
 	if lineStart < ch.end {
-		if ip, err := parseIPv4FromBytes(data[lineStart:ch.end]); err == nil {
-			seen[ip] = struct{}{}
+		ip, err := parseIPv4FromBytes(data[lineStart:ch.end])
+		if err != nil {
+			return nil, fmt.Errorf("invalid IP address: %v", err)
 		}
+		seen.Add(ip)
 	}
 
-	return seen
-}
-
-func (c Uint32MmapParallelLimited) mergeResults(resultChan <-chan IPv4set) IPv4set {
-	total := make(IPv4set)
-	for result := range resultChan {
-		for ip := range result {
-			total[ip] = struct{}{}
-		}
-	}
-	return total
+	return seen, nil
 }

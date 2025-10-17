@@ -1,6 +1,8 @@
 package counter
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	avgIPv4size   = 15
@@ -13,8 +15,6 @@ func maxCapacity(v int) int {
 	}
 	return v
 }
-
-type IPv4set map[uint32]struct{}
 
 func parseIPv4(s string) (uint32, error) {
 	return parseIPv4FromBytes([]byte(s))

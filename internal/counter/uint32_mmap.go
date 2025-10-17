@@ -29,7 +29,7 @@ func (c Uint32Mmap) Count(f *os.File) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
-	seen := make(IPv4set, maxCapacity(size/avgIPv4size))
+	seen := newIPv4Map(maxCapacity(size / avgIPv4size))
 	start := 0
 
 	for i := 0; i < len(data); i++ {
@@ -39,7 +39,7 @@ func (c Uint32Mmap) Count(f *os.File) (int, error) {
 				if err != nil {
 					return 0, fmt.Errorf("invalid IP address: %v", err)
 				}
-				seen[ip] = struct{}{}
+				seen.Add(ip)
 			}
 			start = i + 1
 		}
@@ -50,8 +50,8 @@ func (c Uint32Mmap) Count(f *os.File) (int, error) {
 		if err != nil {
 			return 0, fmt.Errorf("invalid IP address: %v", err)
 		}
-		seen[ip] = struct{}{}
+		seen.Add(ip)
 	}
 
-	return len(seen), nil
+	return seen.Count(), nil
 }

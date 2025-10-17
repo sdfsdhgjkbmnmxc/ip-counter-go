@@ -12,7 +12,11 @@ testdata:
 	@[ -f testdata/ips_1k.txt ]   || go run ./cmd/generate-testdata 1000 > testdata/ips_1k.txt
 	@[ -f testdata/ips_10k.txt ]  || go run ./cmd/generate-testdata 10000 > testdata/ips_10k.txt
 	@[ -f testdata/ips_100k.txt ] || go run ./cmd/generate-testdata 100000 > testdata/ips_100k.txt
+	@[ -f testdata/ips_200k.txt ] || go run ./cmd/generate-testdata 200000 > testdata/ips_200k.txt
+	@[ -f testdata/ips_500k.txt ] || go run ./cmd/generate-testdata 500000 > testdata/ips_500k.txt
 	@[ -f testdata/ips_1m.txt ]   || go run ./cmd/generate-testdata 1000000 > testdata/ips_1m.txt
+	@[ -f testdata/ips_2m.txt ]   || go run ./cmd/generate-testdata 2000000 > testdata/ips_2m.txt
+	@[ -f testdata/ips_5m.txt ]   || go run ./cmd/generate-testdata 5000000 > testdata/ips_5m.txt
 	@[ -f testdata/ips_10m.txt ]  || go run ./cmd/generate-testdata 10000000 > testdata/ips_10m.txt
 
 testdata-large:

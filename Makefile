@@ -6,10 +6,10 @@ testdata:
 
 testdata-large:
 	@mkdir -p testdata
-	wget https://ecwid-vgv-storage.s3.eu-central-1.amazonaws.com/ip_addresses.zip
-	unzip ip_addresses.zip -d testdata/
-	rm ip_addresses.zip
-	ls -lh testdata/
+	@wget -q --show-progress https://ecwid-vgv-storage.s3.eu-central-1.amazonaws.com/ip_addresses.zip
+	@unzip -q ip_addresses.zip -d testdata/
+	@rm ip_addresses.zip
+	@ls -lh testdata/
 
 test:
 	go test -v ./...

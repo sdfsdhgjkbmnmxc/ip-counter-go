@@ -32,7 +32,7 @@ Use `-method` flag to select implementation:
   - Threshold determined experimentally (see `internal/u32/u32_test.go:TestMemoryCrossover`)
 - **Map**: Hash map, memory-efficient for smaller datasets
 - **Bitmap**: Sequential bitmap, fixed 512 MB memory
-- **ParallelBitmap**: Parallel bitmap with atomic operations, 15-18% faster on large files (10M+ addresses)
+- **ParallelBitmap**: Parallel bitmap with atomic operations, 3x faster than sequential Bitmap on large files
 - **Naive**: String-based map without IP parsing (research/comparison)
 
 ## Optimizations
@@ -41,7 +41,7 @@ For maximum performance:
 
 - **Memory-mapped I/O**: Reads files via `mmap` instead of standard I/O (stdin not supported)
 - **Custom IPv4 parser**: Specialized parser converts addresses to `uint32`, significantly faster than standard library
-- **Parallel processing with atomic operations**: Lock-free bitmap updates using CAS on uint64, 15-18% faster on large files (10M+ addresses)
+- **Parallel processing with atomic operations**: Lock-free bitmap updates using CAS on uint64. Each worker maintains local counters to avoid contention, achieving near-linear scaling
 - **Simple input format**: Expects valid IPv4 addresses, one per line (`\n` separated)
 
 Attempted optimizations that didn't deliver:
@@ -55,7 +55,7 @@ Benchmark results (AMD EPYC 7763, 4 workers) - Throughput in K IP/sec:
 
 | Method | 1K | 10K | 100K | 1M | 10M | 100M |
 |--------|-----|-----|------|-----|------|------|
-| Naive | 6,950 | 7,440 | 6,240 | 3,440 | 2,370 | 2,150 |
-| Map | **13,870** | **16,030** | **13,830** | 10,660 | 5,450 | 4,700 |
-| Bitmap | 38 | 367 | 2,620 | 6,860 | 8,140 | 8,240 |
-| ParallelBitmap | 38 | 370 | 3,030 | **10,140** | **13,360** | **13,830** |
+| Naive | 6,791 | 7,278 | 6,183 | 3,601 | 2,437 | 2,149 |
+| Map | **12,345** | **14,440** | **12,735** | 10,815 | 5,609 | 4,646 |
+| Bitmap | 37 | 347 | 2,567 | 6,637 | 7,840 | 8,068 |
+| ParallelBitmap | 37 | 363 | 3,212 | **15,127** | **23,434** | **25,444** |

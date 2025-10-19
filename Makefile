@@ -1,7 +1,7 @@
 .PHONY: test bench testdata testdata-large
 
 sample:
-	go run cmd/ip-counter/main.go testdata/ips_10m.txt -method=exact
+	go run cmd/ip-counter/main.go testdata/ips_10m.txt -method=ParallelBitmap
 
 test: testdata
 	go test -v ./internal/...

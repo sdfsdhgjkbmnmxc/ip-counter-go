@@ -4,13 +4,29 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/pprof"
 
 	"github.com/sdfsdhgjkbmnmxc/ip-counter-go/internal/counters"
 )
 
 func main() {
 	method := flag.String("method", "ComboSet", "counting method")
+	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
 	flag.Parse()
+
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Could not create CPU profile: %v\n", err)
+			os.Exit(1)
+		}
+		defer func() { _ = f.Close() }()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Could not start CPU profile: %v\n", err)
+			os.Exit(1)
+		}
+		defer pprof.StopCPUProfile()
+	}
 
 	if flag.NArg() < 1 {
 		_, _ = fmt.Fprintf(os.Stderr, "Usage: %s [-method=<method>] <filename>\n", os.Args[0])

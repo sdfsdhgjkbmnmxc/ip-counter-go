@@ -26,14 +26,11 @@ ip-counter -method=ParallelBitmap ip_addresses.txt
 
 Use `-method` flag to select implementation:
 
-- **Auto** (default): Automatically selects best strategy based on file size
-  - Uses **Map** for < 28M addresses (memory-efficient)
-  - Switches to **ParallelBitmap** for larger files (parallel processing)
-  - Threshold determined experimentally (see `internal/u32/u32_test.go:TestMemoryCrossover`)
-- **Map**: Hash map, memory-efficient for smaller datasets
-- **Bitmap**: Sequential bitmap, fixed 512 MB memory
-- **ParallelBitmap**: Parallel bitmap with atomic operations, 3x faster than sequential Bitmap on large files
 - **Naive**: String-based map without IP parsing (research/comparison)
+- **Map**: Hash map, memory-efficient for smaller datasets (< 28M addresses, see `internal/u32/u32_test.go:TestMemoryCrossover`)
+- **Bitmap**: Sequential bitmap, fixed 512 MB memory
+- **ParallelBitmap**: Parallel bitmap with atomic operations, 3x faster than sequential Bitmap
+- **Auto** (default): Automatically selects between Map and ParallelBitmap based on file size
 
 ## Optimizations
 

@@ -7,7 +7,6 @@ func NewBitmapSet() Set {
 }
 
 type bitmapSet struct {
-	count  int
 	bitmap []byte
 }
 
@@ -17,7 +16,6 @@ func (s *bitmapSet) Add(ip uint32) bool {
 	mask := byte(1 << bitIndex)
 
 	if s.bitmap[byteIndex]&mask == 0 {
-		s.count++
 		s.bitmap[byteIndex] |= mask
 		return true
 	}

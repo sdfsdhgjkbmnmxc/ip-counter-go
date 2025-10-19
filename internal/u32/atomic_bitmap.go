@@ -9,7 +9,6 @@ func NewAtomicBitmapSet() Set {
 }
 
 type atomicBitmapSet struct {
-	count  atomic.Uint64
 	bitmap []atomic.Uint64
 }
 

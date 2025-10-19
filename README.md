@@ -48,3 +48,14 @@ Attempted optimizations that didn't deliver:
 
 - **Roaring bitmap** with various segment sizes: Added complexity without performance gains. For randomly distributed IPs, created too many small segments with excessive allocations, making it slower than simple bitmap. Simple strategy switching (map → bitmap based on dataset size) proved more effective
 - **Bitmap element size** (uint8 vs uint32 vs uint64): No measurable difference between implementations
+
+### Performance
+
+Benchmark results (AMD EPYC 7763, 4 workers) - Throughput in K IP/sec:
+
+| Method | 1K | 10K | 100K | 1M | 10M | 100M |
+|--------|-----|-----|------|-----|------|------|
+| Naive | 6,950 | 7,440 | 6,240 | 3,440 | 2,370 | 2,150 |
+| Map | **13,870** | **16,030** | **13,830** | 10,660 | 5,450 | 4,700 |
+| Bitmap | 38 | 367 | 2,620 | 6,860 | 8,140 | 8,240 |
+| ParallelBitmap | 38 | 370 | 3,030 | **10,140** | **13,360** | **13,830** |

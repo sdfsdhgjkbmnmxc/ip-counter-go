@@ -12,21 +12,19 @@ type IPAddrCounter interface {
 }
 
 var Registry = countersRegistry{
-	NewMMapCounter("MapSet", func(fileSize int) u32.Set {
-		return u32.NewMapSet(maxCapacity(fileSize / avgIPv4size))
+	NewMMapCounter("Map", func(size int64) u32.Set {
+		return u32.NewMapSet(maxCapacity(int(size) / avgIPv4size))
 	}),
-	NewMMapCounter("BitmapSet", func(fileSize int) u32.Set {
+	NewMMapCounter("Bitmap", func(int64) u32.Set {
 		return u32.NewBitmapSet()
 	}),
-	NewParallelMMapCounter("PAtomicBitmapSet", func(fileSize int) u32.Set {
+	NewParallelMMapCounter("ParallelBitmap", func(int64) u32.Set {
 		return u32.NewAtomicBitmapSet()
 	}),
-	NewMMapCounter("ComboSet", func(fileSize int) u32.Set {
-		if fileSize/avgIPv4size > 28_000_000 { // see u32_test.go:TestMemoryCrossover
-			return u32.NewAtomicBitmapSet()
-		}
-		return u32.NewMapSet(maxCapacity(fileSize / avgIPv4size))
-	}),
+	AutoCounter{
+		SmallFiles: "Map",
+		LargeFiles: "ParallelBitmap",
+	},
 	NaiveCounter{},
 }
 

@@ -18,10 +18,14 @@ func (s *atomicBitmapSet) Add(ip uint32) {
 	bitIndex := ip & 63 // modulo 64
 	mask := uint64(1 << bitIndex)
 
+	if s.bitmap[index].Load()&mask != 0 {
+		return
+	}
+
 	for {
 		old := s.bitmap[index].Load()
 		if old&mask != 0 {
-			return // already set
+			return
 		}
 		if s.bitmap[index].CompareAndSwap(old, old|mask) {
 			s.count.Add(1)

@@ -13,25 +13,27 @@ go install github.com/sdfsdhgjkbmnmxc/ip-counter-go/cmd/ip-counter@latest
 ## Usage
 
 ```bash
-# Default (ComboSet - automatic strategy selection)
+# Default (Auto - automatic strategy selection)
 ip-counter ip_addresses.txt
 
 # Specify method explicitly
-ip-counter -method=MapSet ip_addresses.txt
-ip-counter -method=BitmapSet ip_addresses.txt
+ip-counter -method=Map ip_addresses.txt
+ip-counter -method=Bitmap ip_addresses.txt
+ip-counter -method=ParallelBitmap ip_addresses.txt
 ```
 
 ### Available Methods
 
 Use `-method` flag to select implementation:
 
-- **ComboSet** (default): Automatically switches between MapSet and BitmapSet based on file size
-  - Uses **MapSet** for < 28M addresses (memory-efficient)
-  - Switches to **BitmapSet** for larger files (caps memory at 512 MB)
+- **Auto** (default): Automatically selects best strategy based on file size
+  - Uses **Naive** for < 28M addresses
+  - Switches to **ParallelBitmap** for larger files
   - Threshold determined experimentally (see `internal/u32/u32_test.go:TestMemoryCrossover`)
-- **MapSet**: Hash map, memory-efficient for smaller datasets
-- **BitmapSet**: Bitmap, fast on large datasets with fixed 512 MB memory
-- **NaiveCounter**: String-based map without IP parsing (research/comparison)
+- **Map**: Hash map, memory-efficient for smaller datasets
+- **Bitmap**: Sequential bitmap, fixed 512 MB memory
+- **ParallelBitmap**: Parallel bitmap with atomic operations, 15-18% faster on large files (10M+ addresses)
+- **Naive**: String-based map without IP parsing (research/comparison)
 
 ## Optimizations
 

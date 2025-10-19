@@ -7,7 +7,7 @@ import (
 	"github.com/sdfsdhgjkbmnmxc/ip-counter-go/internal/u32"
 )
 
-func NewMMapCounter(name string, NewSet func(fileSize int) u32.Set) MMapCounter {
+func NewMMapCounter(name string, NewSet func(fileSize int64) u32.Set) MMapCounter {
 	return MMapCounter{
 		name:   name,
 		newSet: NewSet,
@@ -16,7 +16,7 @@ func NewMMapCounter(name string, NewSet func(fileSize int) u32.Set) MMapCounter 
 
 type MMapCounter struct {
 	name   string
-	newSet func(fileSize int) u32.Set
+	newSet func(fileSize int64) u32.Set
 }
 
 func (c MMapCounter) Name() string { return c.name }
@@ -27,12 +27,12 @@ func (c MMapCounter) Count(f *os.File) (int, error) {
 		return 0, err
 	}
 
-	size := int(stat.Size())
+	size := stat.Size()
 	if size == 0 {
 		return 0, nil
 	}
 
-	data, err := syscall.Mmap(int(f.Fd()), 0, size, syscall.PROT_READ, syscall.MAP_SHARED)
+	data, err := syscall.Mmap(int(f.Fd()), 0, int(size), syscall.PROT_READ, syscall.MAP_SHARED)
 	if err != nil {
 		return 0, err
 	}

@@ -10,7 +10,7 @@ import (
 	"github.com/sdfsdhgjkbmnmxc/ip-counter-go/internal/u32"
 )
 
-func NewParallelMMapCounter(name string, newSet func(fileSize int) u32.Set) ParallelMMapCounter {
+func NewParallelMMapCounter(name string, newSet func(fileSize int64) u32.Set) ParallelMMapCounter {
 	return ParallelMMapCounter{
 		name:   name,
 		newSet: newSet,
@@ -19,7 +19,7 @@ func NewParallelMMapCounter(name string, newSet func(fileSize int) u32.Set) Para
 
 type ParallelMMapCounter struct {
 	name   string
-	newSet func(fileSize int) u32.Set
+	newSet func(fileSize int64) u32.Set
 }
 
 func (c ParallelMMapCounter) Name() string { return c.name }
@@ -35,19 +35,19 @@ func (c ParallelMMapCounter) Count(f *os.File) (int, error) {
 		return 0, err
 	}
 
-	size := int(stat.Size())
+	size := stat.Size()
 	if size == 0 {
 		return 0, nil
 	}
 
 	numWorkers := runtime.NumCPU()
 
-	minSize := avgIPv4size * 10 * numWorkers
+	minSize := int64(avgIPv4size * 10 * numWorkers)
 	if size < minSize {
 		numWorkers = 1
 	}
 
-	data, err := syscall.Mmap(int(f.Fd()), 0, size, syscall.PROT_READ, syscall.MAP_SHARED)
+	data, err := syscall.Mmap(int(f.Fd()), 0, int(size), syscall.PROT_READ, syscall.MAP_SHARED)
 	if err != nil {
 		return 0, err
 	}

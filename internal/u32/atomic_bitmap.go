@@ -13,27 +13,22 @@ type atomicBitmapSet struct {
 	bitmap []atomic.Uint64
 }
 
-func (s *atomicBitmapSet) Add(ip uint32) {
+func (s *atomicBitmapSet) Add(ip uint32) bool {
 	index := ip >> 6    // divide by 64
 	bitIndex := ip & 63 // modulo 64
 	mask := uint64(1 << bitIndex)
 
 	if s.bitmap[index].Load()&mask != 0 {
-		return
+		return false
 	}
 
 	for {
 		old := s.bitmap[index].Load()
 		if old&mask != 0 {
-			return
+			return false
 		}
 		if s.bitmap[index].CompareAndSwap(old, old|mask) {
-			s.count.Add(1)
-			return
+			return true
 		}
 	}
-}
-
-func (s *atomicBitmapSet) Count() int {
-	return int(s.count.Load())
 }

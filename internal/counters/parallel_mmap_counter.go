@@ -3,6 +3,7 @@ package counters
 import (
 	"os"
 	"runtime"
+	"sync/atomic"
 	"syscall"
 
 	"golang.org/x/sync/errgroup"
@@ -55,16 +56,26 @@ func (c ParallelMMapCounter) Count(f *os.File) (int, error) {
 
 	seen := c.newSet(size)
 	if numWorkers == 1 {
-		return c.processRange(data, seen)
+		count, err := c.processRange(data, seen)
+		if err != nil {
+			return 0, err
+		}
+		return int(count), nil
 	}
 
-	ranges := c.getRanges(numWorkers, data)
+	var count atomic.Uint64
 	var g errgroup.Group
+	ranges := c.getRanges(numWorkers, data)
+
 	for i := 0; i < numWorkers; i++ {
 		r := ranges[i]
 		g.Go(func() error {
-			_, err := c.processRange(data[r.start:r.end], seen)
-			return err
+			workerCount, err := c.processRange(data[r.start:r.end], seen)
+			if err != nil {
+				return err
+			}
+			count.Add(workerCount)
+			return nil
 		})
 	}
 
@@ -72,7 +83,7 @@ func (c ParallelMMapCounter) Count(f *os.File) (int, error) {
 		return 0, err
 	}
 
-	return seen.Count(), nil
+	return int(count.Load()), nil
 }
 
 func (c ParallelMMapCounter) getRanges(numWorkers int, data []byte) []fileRange {
@@ -98,8 +109,9 @@ func (c ParallelMMapCounter) getRanges(numWorkers int, data []byte) []fileRange 
 	return ranges
 }
 
-func (c ParallelMMapCounter) processRange(data []byte, seen u32.Set) (int, error) {
-	start := 0
+func (c ParallelMMapCounter) processRange(data []byte, seen u32.Set) (uint64, error) {
+	var start int
+	var count uint64
 
 	for i := 0; i < len(data); i++ {
 		if data[i] == '\n' {
@@ -108,7 +120,9 @@ func (c ParallelMMapCounter) processRange(data []byte, seen u32.Set) (int, error
 				if err != nil {
 					return 0, wrapInvalidIPError(err)
 				}
-				seen.Add(ip)
+				if seen.Add(ip) {
+					count++
+				}
 			}
 			start = i + 1
 		}
@@ -119,8 +133,10 @@ func (c ParallelMMapCounter) processRange(data []byte, seen u32.Set) (int, error
 		if err != nil {
 			return 0, wrapInvalidIPError(err)
 		}
-		seen.Add(ip)
+		if seen.Add(ip) {
+			count++
+		}
 	}
 
-	return seen.Count(), nil
+	return count, nil
 }

@@ -11,7 +11,7 @@ type bitmapSet struct {
 	bitmap []byte
 }
 
-func (s *bitmapSet) Add(ip uint32) {
+func (s *bitmapSet) Add(ip uint32) bool {
 	byteIndex := ip >> 3 // divide by 8
 	bitIndex := ip & 7   // modulo 8
 	mask := byte(1 << bitIndex)
@@ -19,9 +19,8 @@ func (s *bitmapSet) Add(ip uint32) {
 	if s.bitmap[byteIndex]&mask == 0 {
 		s.count++
 		s.bitmap[byteIndex] |= mask
+		return true
 	}
-}
 
-func (s *bitmapSet) Count() int {
-	return s.count
+	return false
 }

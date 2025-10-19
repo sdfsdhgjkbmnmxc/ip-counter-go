@@ -38,6 +38,7 @@ func (c MMapCounter) Count(f *os.File) (int, error) {
 	}
 	defer func() { _ = syscall.Munmap(data) }()
 
+	count := 0
 	seen := c.newSet(size)
 	start := 0
 
@@ -48,7 +49,9 @@ func (c MMapCounter) Count(f *os.File) (int, error) {
 				if err != nil {
 					return 0, wrapInvalidIPError(err)
 				}
-				seen.Add(ip)
+				if seen.Add(ip) {
+					count++
+				}
 			}
 			start = i + 1
 		}
@@ -59,8 +62,10 @@ func (c MMapCounter) Count(f *os.File) (int, error) {
 		if err != nil {
 			return 0, wrapInvalidIPError(err)
 		}
-		seen.Add(ip)
+		if seen.Add(ip) {
+			count++
+		}
 	}
 
-	return seen.Count(), nil
+	return count, nil
 }

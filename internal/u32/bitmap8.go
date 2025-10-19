@@ -12,8 +12,8 @@ type bitmapSet struct {
 }
 
 func (s *bitmapSet) Add(ip uint32) {
-	byteIndex := ip >> 3
-	bitIndex := ip & 7
+	byteIndex := ip >> 3 // divide by 8
+	bitIndex := ip & 7   // modulo 8
 	mask := byte(1 << bitIndex)
 
 	if s.bitmap[byteIndex]&mask == 0 {

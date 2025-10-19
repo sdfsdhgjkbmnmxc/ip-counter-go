@@ -18,6 +18,12 @@ var Registry = countersRegistry{
 	NewMMapCounter("BitmapSet", func(fileSize int) u32.Set {
 		return u32.NewBitmapSet()
 	}),
+	NewMMapCounter("Bitmap32Set", func(fileSize int) u32.Set {
+		return u32.NewBitmap32Set()
+	}),
+	NewMMapCounter("Bitmap64Set", func(fileSize int) u32.Set {
+		return u32.NewBitmap64Set()
+	}),
 	NewMMapCounter("ComboSet", func(fileSize int) u32.Set {
 		if fileSize/avgIPv4size > 28_000_000 { // see u32_test.go:TestMemoryCrossover
 			return u32.NewBitmapSet()

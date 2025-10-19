@@ -45,3 +45,4 @@ Attempted optimizations that didn't deliver:
 
 - **Roaring bitmap** with various segment sizes: Added complexity without performance gains. For randomly distributed IPs, created too many small segments with excessive allocations, making it slower than simple bitmap. Simple strategy switching (map → bitmap based on dataset size) proved more effective
 - **Parallel processing** with goroutines: Only ~5-10% speedup while significantly complicating the codebase
+- **Bitmap element size** (uint8 vs uint32 vs uint64): No measurable difference between implementations

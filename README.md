@@ -32,6 +32,12 @@ Use `-method` flag to select implementation:
 - **ParallelBitmap**: Parallel bitmap with atomic operations, 3x faster than sequential Bitmap
 - **Auto** (default): Automatically selects between Map and ParallelBitmap based on file size
 
+### Input Format Limitations
+- **Valid IPv4 addresses only**: Each line must contain a valid IPv4 address (e.g., `192.168.1.1`)
+- **Strict newline separator**: Lines must be separated by `\n` (LF), not `\r\n` (CRLF)
+- **No empty lines**: Empty lines are not supported
+- **No stdin support**: Input must be a file (mmap requirement)
+
 ## Optimizations
 
 ### Key optimizations:
@@ -43,12 +49,6 @@ Use `-method` flag to select implementation:
 ###  Attempted optimizations that didn't deliver:
 - **Roaring bitmap** with various segment sizes: Added complexity without performance gains. For randomly distributed IPs, created too many small segments with excessive allocations, making it slower than simple bitmap. Simple strategy switching (map → bitmap based on dataset size) proved more effective
 - **Bitmap element size** (uint8 vs uint32 vs uint64): No measurable difference between implementations
-
-### Input Format Limitations
-- **Valid IPv4 addresses only**: Each line must contain a valid IPv4 address (e.g., `192.168.1.1`)
-- **Strict newline separator**: Lines must be separated by `\n` (LF), not `\r\n` (CRLF)
-- **No empty lines**: Empty lines are not supported
-- **No stdin support**: Input must be a file (mmap requirement)
 
 ### Performance
 

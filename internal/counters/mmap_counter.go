@@ -1,7 +1,6 @@
 package counters
 
 import (
-	"fmt"
 	"os"
 	"syscall"
 
@@ -47,7 +46,7 @@ func (c MMapCounter) Count(f *os.File) (int, error) {
 			if i > start {
 				ip, err := parseIPv4FromBytes(data[start:i])
 				if err != nil {
-					return 0, fmt.Errorf("invalid IP address: %v", err)
+					return 0, wrapInvalidIPError(err)
 				}
 				seen.Add(ip)
 			}
@@ -58,7 +57,7 @@ func (c MMapCounter) Count(f *os.File) (int, error) {
 	if start < len(data) {
 		ip, err := parseIPv4FromBytes(data[start:])
 		if err != nil {
-			return 0, fmt.Errorf("invalid IP address: %v", err)
+			return 0, wrapInvalidIPError(err)
 		}
 		seen.Add(ip)
 	}

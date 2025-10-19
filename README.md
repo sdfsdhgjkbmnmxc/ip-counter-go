@@ -34,17 +34,21 @@ Use `-method` flag to select implementation:
 
 ## Optimizations
 
-For maximum performance:
-
-- **Memory-mapped I/O**: Reads files via `mmap` instead of standard I/O (stdin not supported)
+### Key optimizations:
+- **Memory-mapped I/O**: Reads files via `mmap` instead of standard I/O
 - **Custom IPv4 parser**: Specialized parser converts addresses to `uint32`, significantly faster than standard library
-- **Parallel processing with atomic operations**: Lock-free bitmap updates using CAS on uint64. Each worker maintains local counters to avoid contention, achieving near-linear scaling
-- **Simple input format**: Expects valid IPv4 addresses, one per line (`\n` separated)
+- **Bitmap data structure** (for large datasets): Fixed 512MB bitmap with no allocations after initialization, better cache locality
+- **Parallel processing**: Multiple workers process different file ranges concurrently using lock-free atomic CAS operations on uint64. Each worker maintains local counter to avoid contention, achieving near-linear scaling
 
-Attempted optimizations that didn't deliver:
-
+###  Attempted optimizations that didn't deliver:
 - **Roaring bitmap** with various segment sizes: Added complexity without performance gains. For randomly distributed IPs, created too many small segments with excessive allocations, making it slower than simple bitmap. Simple strategy switching (map → bitmap based on dataset size) proved more effective
 - **Bitmap element size** (uint8 vs uint32 vs uint64): No measurable difference between implementations
+
+### Input Format Limitations
+- **Valid IPv4 addresses only**: Each line must contain a valid IPv4 address (e.g., `192.168.1.1`)
+- **Strict newline separator**: Lines must be separated by `\n` (LF), not `\r\n` (CRLF)
+- **No empty lines**: Empty lines are not supported
+- **No stdin support**: Input must be a file (mmap requirement)
 
 ### Performance
 
